@@ -14,7 +14,7 @@ export async function execute(interaction) {
   const user = interaction.options.getUser("jogador");
   const player = await Player.findOne({ discordId: user.id });
 
-  if (!player || !player.rawFicha) {
+  if (!player?.rawFicha) {
     return interaction.reply({
       content: "❌ Ficha não encontrada.",
       ephemeral: true
@@ -22,6 +22,6 @@ export async function execute(interaction) {
   }
 
   await interaction.reply({
-    content: player.rawFicha
+    content: `📄 **Ficha de ${user.username}**\n\n${player.rawFicha}`
   });
 }
