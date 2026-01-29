@@ -1,4 +1,5 @@
 import { SlashCommandBuilder } from "discord.js";
+import Player from "../models/Player.js";
 import { rolarD20 } from "../services/rollService.js";
 
 export const data = new SlashCommandBuilder()
@@ -17,11 +18,17 @@ export const data = new SlashCommandBuilder()
 
 export async function execute(interaction) {
   const tipo = interaction.options.getString("tipo");
+  const player = await Player.findOne({ discordId: interaction.user.id });
+
+  if (!player) {
+    return interaction.reply({ content: "❌ Jogador não encontrado.", ephemeral: true });
+  }
+
   const { valor, resultado } = rolarD20();
 
-  await interaction.reply(
-    `📤 **Cruzamento (${tipo})**  
+  await interaction.reply({
+    content: `📤 **Cruzamento (${tipo})**  
 🎲 D20: **${valor}**  
 📊 Resultado: **${resultado}**`
-  );
+  });
 }
