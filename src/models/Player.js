@@ -73,7 +73,10 @@ const PlayerSchema = new mongoose.Schema({
     GBP: { type: Number, default: 0 }
   },
 
-  treinosSemana: { type: Number, default: 0 }
+  treinosSemana: { type: Number, default: 0 },
+
+  // ✅ Campo necessário para os comandos que usam rawFicha
+  rawFicha: { type: String, default: "" }
 });
 
 export default mongoose.model("Player", PlayerSchema);
