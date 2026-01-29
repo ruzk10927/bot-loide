@@ -1,29 +1,33 @@
 import { SlashCommandBuilder } from "discord.js";
-import { rolarD20 } from "../services/rollService.js";
+import Player from "../models/Player.js";
+import { extrairAtributo, possuiPlaystyle } from "../services/fichaParser.js";
+import { rolarComAtributo } from "../services/advancedRollService.js";
 
 export const data = new SlashCommandBuilder()
   .setName("drible")
   .setDescription("Realiza um drible")
   .addStringOption(opt =>
     opt.setName("tipo")
-      .setDescription("Tipo de drible")
       .setRequired(true)
       .addChoices(
         { name: "Pedalada", value: "pedalada" },
-        { name: "Chapéu", value: "chapeu" },
-        { name: "Elástico", value: "elastico" },
-        { name: "Caneta", value: "caneta" },
-        { name: "360", value: "360" }
+        { name: "Caneta", value: "caneta" }
       )
   );
 
 export async function execute(interaction) {
   const tipo = interaction.options.getString("tipo");
-  const { valor, resultado } = rolarD20();
+  const player = await Player.findOne({ discordId: interaction.user.id });
+
+  const atributo = extrairAtributo(player.rawFicha, "DRIBLE", "Dribles");
+  let bonus = possuiPlaystyle(player.rawFicha, "Malvadeza") ? 3 : 0;
+
+  const { base, total, resultado } = rolarComAtributo(atributo, bonus);
 
   await interaction.reply(
-    `🕺 **Drible (${tipo})**  
-🎲 D20: **${valor}**  
-📊 Resultado: **${resultado}**`
+    `🕺 **Drible (${tipo})**
+🎲 Base: ${base}
+🎯 Total: **${total}**
+📊 **${resultado}**`
   );
 }
