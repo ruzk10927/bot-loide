@@ -16,7 +16,7 @@ export const data = new SlashCommandBuilder()
         { name: "Chapéu", value: "chapeu" },
         { name: "Toque Duplo", value: "toque_duplo" },
         { name: "Elástico", value: "elastico" },
-        { name: "360", value: "360" }
+        { name: "360 Graus", value: "360_graus" }
       )
   );
 
@@ -24,7 +24,11 @@ export async function execute(interaction) {
   const tipo = interaction.options.getString("tipo");
   const player = await Player.findOne({ discordId: interaction.user.id });
 
-  if (!player?.rawFicha) {
+  if (!player) {
+    return interaction.reply({ content: "❌ Jogador não encontrado no banco de dados.", ephemeral: true });
+  }
+
+  if (!player.rawFicha) {
     return interaction.reply({ content: "❌ Ficha não integrada.", ephemeral: true });
   }
 
