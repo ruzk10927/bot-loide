@@ -16,18 +16,28 @@ export const data = new SlashCommandBuilder()
   );
 
 export async function execute(interaction) {
-  const tipo = interaction.options.getString("tipo");
-  const player = await Player.findOne({ discordId: interaction.user.id });
+  try {
+    const tipo = interaction.options.getString("tipo");
+    const player = await Player.findOne({ discordId: interaction.user.id });
 
-  const atributo = extrairAtributo(player.rawFicha, "PASSE", "Passe Curto");
-  let bonus = possuiPlaystyle(player.rawFicha, "Passe Incisivo") ? 3 : 0;
+    if (!player?.rawFicha) {
+      return interaction.reply({ content: "❌ Ficha não integrada.", ephemeral: true });
+    }
 
-  const { base, total, resultado } = rolarComAtributo(atributo, bonus);
+    const atributo = extrairAtributo(player.rawFicha, "PASSE", "Passe Curto");
+    let bonus = possuiPlaystyle(player.rawFicha, "Passe Incisivo") ? 3 : 0;
 
-  await interaction.reply(
-    `🎯 **Passe (${tipo})**
+    const { base, total, resultado } = rolarComAtributo(atributo, bonus);
+
+    await interaction.reply(
+      `🎯 **Passe (${tipo})**
 🎲 Base: ${base}
+📈 Modificador: +${Math.floor(atributo / 10)} | Playstyle: +${bonus}
 🎯 Total: **${total}**
 📊 **${resultado}**`
-  );
+    );
+  } catch (err) {
+    console.error(err);
+    await interaction.reply({ content: "❌ Ocorreu um erro ao executar o passe.", ephemeral: true });
+  }
 }
