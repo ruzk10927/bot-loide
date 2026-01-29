@@ -1,10 +1,10 @@
-import "dotenv/config";
 import { REST, Routes } from "discord.js";
 import fs from "fs";
 import path from "path";
+import "dotenv/config";
 
 const commands = [];
-const commandsPath = path.resolve("src/commands");
+const commandsPath = path.join(process.cwd(), "src", "commands");
 const commandFiles = fs.readdirSync(commandsPath).filter(f => f.endsWith(".js"));
 
 for (const file of commandFiles) {
@@ -16,7 +16,7 @@ const rest = new REST({ version: "10" }).setToken(process.env.DISCORD_TOKEN);
 
 (async () => {
   try {
-    console.log("🔄 Registrando comandos...");
+    console.log("🔁 Registrando slash commands...");
 
     await rest.put(
       Routes.applicationGuildCommands(
@@ -26,7 +26,7 @@ const rest = new REST({ version: "10" }).setToken(process.env.DISCORD_TOKEN);
       { body: commands }
     );
 
-    console.log("✅ Comandos registrados com sucesso!");
+    console.log("✅ Slash commands registrados com sucesso.");
   } catch (error) {
     console.error(error);
   }
