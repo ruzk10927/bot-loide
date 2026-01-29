@@ -7,9 +7,10 @@ export function rolarComAtributo(baseAtributo, bonusPlaystyle = 0) {
 
   if (total > 20) total = 20;
 
-  let resultado = "Falha";
-  if (total >= 10 && total <= 15) resultado = "Médio";
-  if (total >= 16) resultado = "Sucesso Total";
+  let resultado;
+  if (total < 10) resultado = "Falha";
+  else if (total <= 15) resultado = "Médio";
+  else resultado = "Sucesso Total";
 
   return { base, total, resultado };
 }
