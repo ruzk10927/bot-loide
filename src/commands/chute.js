@@ -1,30 +1,42 @@
 import { SlashCommandBuilder } from "discord.js";
-import { rolarD20 } from "../services/rollService.js";
+import Player from "../models/Player.js";
+import { extrairAtributo, possuiPlaystyle } from "../services/fichaParser.js";
+import { rolarComAtributo } from "../services/advancedRollService.js";
 
 export const data = new SlashCommandBuilder()
   .setName("chute")
   .setDescription("Realiza um chute")
   .addStringOption(opt =>
     opt.setName("tipo")
-      .setDescription("Tipo de chute")
       .setRequired(true)
       .addChoices(
         { name: "Colocado", value: "colocado" },
         { name: "Bomba", value: "bomba" },
-        { name: "Cavadinha", value: "cavadinha" },
-        { name: "Rasteiro", value: "rasteiro" },
-        { name: "Trivela", value: "trivela" },
-        { name: "De Letra", value: "letra" }
+        { name: "Trivela", value: "trivela" }
       )
   );
 
 export async function execute(interaction) {
   const tipo = interaction.options.getString("tipo");
-  const { valor, resultado } = rolarD20();
+  const player = await Player.findOne({ discordId: interaction.user.id });
+
+  if (!player?.rawFicha) {
+    return interaction.reply({ content: "❌ Ficha não integrada.", ephemeral: true });
+  }
+
+  const atributo = extrairAtributo(player.rawFicha, "FINALIZAÇÃO", "Finalização");
+  let bonus = 0;
+
+  if (possuiPlaystyle(player.rawFicha, "Chute Colocado") && tipo === "colocado") bonus += 2;
+  if (possuiPlaystyle(player.rawFicha, "Trivela") && tipo === "trivela") bonus += 2;
+
+  const { base, total, resultado } = rolarComAtributo(atributo, bonus);
 
   await interaction.reply(
-    `⚽ **Chute (${tipo})**  
-🎲 D20: **${valor}**  
-📊 Resultado: **${resultado}**`
+    `⚽ **Chute (${tipo})**
+🎲 Base: ${base}
+📈 Modificador: +${Math.floor(atributo / 10)} | Playstyle: +${bonus}
+🎯 Resultado Final: **${total}**
+📊 **${resultado}**`
   );
 }
