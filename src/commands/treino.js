@@ -1,6 +1,6 @@
 import { SlashCommandBuilder } from "discord.js";
 import Player from "../models/Player.js";
-import { calcularTreino, aplicarPontosFoco } from "../services/trainingService.js";
+import { calcularTreino } from "../services/trainingService.js";
 
 export const data = new SlashCommandBuilder()
   .setName("treino")
@@ -32,16 +32,20 @@ export async function execute(interaction) {
       return interaction.reply({ content: "🚑 Limite semanal atingido.", ephemeral: true });
     }
 
+    // Inicializa o foco se não existir
+    if (!player.atributos[foco]) player.atributos[foco] = 0;
+
     const { resultado, nota, pontos } = calcularTreino();
     const obrigatorios = Math.floor(pontos / 2);
     const livres = pontos - obrigatorios;
 
-    // Aplica obrigatoriamente os pontos no foco selecionado
-    aplicarPontosFoco(player, foco, obrigatorios);
+    // Aplica os pontos obrigatórios no foco
+    player.atributos[foco] += obrigatorios;
 
     // Adiciona os pontos livres
     player.pontos.livres += livres;
     player.treinosSemana += 1;
+
     await player.save();
 
     await interaction.reply(
@@ -54,6 +58,9 @@ export async function execute(interaction) {
     );
   } catch (err) {
     console.error(err);
-    await interaction.reply({ content: "❌ Ocorreu um erro ao realizar o treino.", ephemeral: true });
+    await interaction.reply({
+      content: "❌ Ocorreu um erro ao realizar o treino.",
+      ephemeral: true
+    });
   }
 }
