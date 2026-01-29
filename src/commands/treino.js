@@ -1,6 +1,6 @@
 import { SlashCommandBuilder } from "discord.js";
 import Player from "../models/Player.js";
-import { calcularTreino } from "../services/trainingService.js";
+import { calcularTreino, aplicarPontosFoco } from "../services/trainingService.js";
 
 export const data = new SlashCommandBuilder()
   .setName("treino")
@@ -20,31 +20,40 @@ export const data = new SlashCommandBuilder()
   );
 
 export async function execute(interaction) {
-  const foco = interaction.options.getString("foco");
-  const player = await Player.findOne({ discordId: interaction.user.id });
+  try {
+    const foco = interaction.options.getString("foco");
+    const player = await Player.findOne({ discordId: interaction.user.id });
 
-  if (!player) {
-    return interaction.reply({ content: "❌ Ficha não integrada.", ephemeral: true });
-  }
+    if (!player?.rawFicha) {
+      return interaction.reply({ content: "❌ Ficha não integrada.", ephemeral: true });
+    }
 
-  if (player.treinosSemana >= 3) {
-    return interaction.reply({ content: "🚑 Limite semanal atingido.", ephemeral: true });
-  }
+    if (player.treinosSemana >= 3) {
+      return interaction.reply({ content: "🚑 Limite semanal atingido.", ephemeral: true });
+    }
 
-  const { resultado, nota, pontos } = calcularTreino();
-  const obrigatorios = Math.floor(pontos / 2);
-  const livres = pontos - obrigatorios;
+    const { resultado, nota, pontos } = calcularTreino();
+    const obrigatorios = Math.floor(pontos / 2);
+    const livres = pontos - obrigatorios;
 
-  player.pontos.livres += livres;
-  player.treinosSemana += 1;
-  await player.save();
+    // Aplica obrigatoriamente os pontos no foco selecionado
+    aplicarPontosFoco(player, foco, obrigatorios);
 
-  await interaction.reply(
-    `🏋️ **Treino de ${foco.toUpperCase()}**  
+    // Adiciona os pontos livres
+    player.pontos.livres += livres;
+    player.treinosSemana += 1;
+    await player.save();
+
+    await interaction.reply(
+      `🏋️ **Treino de ${foco.toUpperCase()}**  
 🎲 Rolagem: ${resultado}  
 📊 Nota: **${nota}**  
 ⭐ Pontos ganhos: **${pontos}**  
 🔒 ${obrigatorios} pontos aplicados no foco  
 🎁 ${livres} pontos livres`
-  );
+    );
+  } catch (err) {
+    console.error(err);
+    await interaction.reply({ content: "❌ Ocorreu um erro ao realizar o treino.", ephemeral: true });
+  }
 }
