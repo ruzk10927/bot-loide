@@ -17,18 +17,29 @@ export const data = new SlashCommandBuilder()
   );
 
 export async function execute(interaction) {
-  const tipo = interaction.options.getString("tipo");
-  const player = await Player.findOne({ discordId: interaction.user.id });
+  try {
+    const tipo = interaction.options.getString("tipo");
+    const player = await Player.findOne({ discordId: interaction.user.id });
 
-  if (!player) {
-    return interaction.reply({ content: "❌ Jogador não encontrado.", ephemeral: true });
-  }
+    if (!player) {
+      return await interaction.reply({
+        content: "❌ Jogador não encontrado no banco de dados.",
+        ephemeral: true
+      });
+    }
 
-  const { valor, resultado } = rolarD20();
+    const { valor, resultado } = rolarD20();
 
-  await interaction.reply({
-    content: `📤 **Cruzamento (${tipo})**  
+    await interaction.reply({
+      content: `📤 **Cruzamento (${tipo})**  
 🎲 D20: **${valor}**  
 📊 Resultado: **${resultado}**`
-  });
+    });
+  } catch (err) {
+    console.error(err);
+    await interaction.reply({
+      content: "❌ Ocorreu um erro ao executar o comando.",
+      ephemeral: true
+    });
+  }
 }
