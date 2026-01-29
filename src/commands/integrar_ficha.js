@@ -16,17 +16,34 @@ export const data = new SlashCommandBuilder()
   );
 
 export async function execute(interaction) {
-  const user = interaction.options.getUser("jogador");
-  const ficha = interaction.options.getString("ficha");
+  try {
+    const user = interaction.options.getUser("jogador");
+    const ficha = interaction.options.getString("ficha");
 
-  await Player.findOneAndUpdate(
-    { discordId: user.id },
-    { rawFicha: ficha },
-    { upsert: true }
-  );
+    const player = await Player.findOne({ discordId: user.id });
 
-  await interaction.reply({
-    content: `📄 Ficha de ${user.username} integrada com sucesso.`,
-    ephemeral: true
-  });
+    if (player) {
+      player.rawFicha = ficha;
+      await player.save();
+    } else {
+      await Player.create({
+        discordId: user.id,
+        rawFicha: ficha,
+        pontos: { livres: 0 },
+        banco: { BRL: 0, EUR: 0, GBP: 0 },
+        playstyles: []
+      });
+    }
+
+    await interaction.reply({
+      content: `📄 Ficha de ${user.username} integrada com sucesso.`,
+      ephemeral: true
+    });
+  } catch (err) {
+    console.error(err);
+    await interaction.reply({
+      content: "❌ Ocorreu um erro ao integrar a ficha.",
+      ephemeral: true
+    });
+  }
 }
